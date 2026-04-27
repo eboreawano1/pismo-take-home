@@ -31,13 +31,13 @@ func (repository *Repository) Save(ctx context.Context, e event.Event) error {
 			event_id,
 			event_type,
 			tenant_id,
-			status
+			status,
 			producer,
 			payload,
 			event_time,
-			schema_version,
+			schema_version
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)
+		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
 	`,
 		e.EventId,
 		e.EventType,

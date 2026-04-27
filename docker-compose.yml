@@ -1,0 +1,13 @@
+services:
+  postgres:
+    container_name: pismo-postgres-db
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pismo-database
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    
