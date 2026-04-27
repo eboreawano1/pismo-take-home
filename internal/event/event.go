@@ -5,6 +5,12 @@ import (
 	"encoding/json"
 )
 
+const (
+	ReadyToDeliverStatus  = "READY_TO_DELIVER"
+	InvalidEventStatus    = "INVALID_EVENT"
+	ProcessingErrorStatus = "PROCESSING_ERROR"
+)
+
 type Event struct {
 	EventId       string          `json:"event_id"`
 	EventType     string          `json:"event_type"`

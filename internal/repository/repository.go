@@ -25,7 +25,7 @@ func New(databaseURL string) (*Repository, error) {
 	return &Repository{ database: database }, nil
 }
 
-func (repository *Repository) Save(ctx context.Context, event event.Event) error {
+func (repository *Repository) Save(ctx context.Context, e event.Event) error {
 	_, error := repository.database.ExecContext(ctx, `
 		INSERT INTO processed_events (
 			event_id,
@@ -39,14 +39,14 @@ func (repository *Repository) Save(ctx context.Context, event event.Event) error
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)
 	`,
-		event.EventId,
-		event.EventType,
-		event.TenantId,
-		"READY_TO_DELIVER",
-		event.Producer,
-		event.Payload,
-		event.EventTime,
-		event.SchemaVersion,
+		e.EventId,
+		e.EventType,
+		e.TenantId,
+		event.ReadyToDeliverStatus,
+		e.Producer,
+		e.Payload,
+		e.EventTime,
+		e.SchemaVersion,
 	
 	)
 
