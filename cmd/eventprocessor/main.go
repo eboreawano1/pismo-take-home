@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"pismo-take-home/config"
+	"pismo-take-home/internal/repository"
 )
 
 func main() {
@@ -14,4 +15,12 @@ func main() {
 	}
 
 	log.Println("configured database: ", config.DatabaseURL != "")
+	repo, error := repository.New(config.DatabaseURL)
+
+	if error != nil {
+		log.Fatal(error)
+	}
+
+	defer repo.Close()
+	log.Println("database connected")
 }
