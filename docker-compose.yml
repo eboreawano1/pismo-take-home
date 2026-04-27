@@ -26,6 +26,17 @@ services:
     environment:
         ZOOKEEPER_CLIENT_PORT: 2181
     image: confluentinc/cp-zookeeper:7.5.0
+
+  processor:
+    build: .
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      KAFKA_TOPIC: events
+      KAFKA_GROUP_ID: processor-group-1
+      KAFKA_BROKERS: kafka:9092
+      DATABASE_URL: postgres://username:password@postgres:5432/pismo-database?sslmode=disable
     
 
     

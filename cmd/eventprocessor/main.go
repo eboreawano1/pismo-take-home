@@ -3,13 +3,14 @@ package main
 import (
 	"log"
 	"context"
+	"strings"
 	"pismo-take-home/config"
+	"pismo-take-home/internal/consumer"
 	"pismo-take-home/internal/eventprocessor"
 	"pismo-take-home/internal/repository"
 )
 
 func main() {
-	log.Println("starting event-processor")
 	config, error := config.Load()
 
 	if(error != nil) {
@@ -26,22 +27,33 @@ func main() {
 	defer repo.Close()
 	log.Println("database connected")
 	processor := eventprocessor.New(repo)
+	brokers := strings.Split(config.KafkaBrokers, ",")
+	kafkaConsumer := consumer.NewKafkaConsumer(config.KafkaTopic, config.KafkaGroupID, brokers)
+	ctx := context.Background()
+	log.Println("starting event-processor")
 
-	eventBytes := []byte(`{
-		"event_id": "1",
-		"event_type": "TEST_EVENT",
-		"tenant_id": "tenant-1",
-		"producer": "MANUAL",
-		"event_time": "2026-04-27T00:00:00Z",
-		"schema_version": "1",
-		"payload": {}
-	}`)
+	for {
+		message, error := kafkaConsumer.ConsumeMessage(ctx)
 
-	processingError := processor.ProcessEvent(context.Background(), eventBytes)
+		if error != nil {
+			log.Println("Error fetching message:", error)
+			continue
+		}
 
-	if processingError != nil {
-		log.Fatal(processingError)
+		processingError := processor.ProcessEvent(ctx, message.ByteValue)
+
+		if processingError != nil {
+			log.Println("Error prossessing event:", processingError)
+			continue
+		}
+
+		commitError := kafkaConsumer.CommitMessage(ctx,message)
+
+		if commitError != nil {
+			log.Println("Error committing Event:", commitError)
+			continue
+		}
+
+		log.Println("event processed!")
 	}
-
-	log.Println("event processed!")
 }
