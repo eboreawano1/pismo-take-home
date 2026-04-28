@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["amount", "currency"],
+  "properties": {
+    "currency": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3
+    },
+    "amount": {
+        "type": "integer",
+        "minimum": 1
+    }
+  }
+}
