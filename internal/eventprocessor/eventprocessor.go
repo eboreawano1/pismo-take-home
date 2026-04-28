@@ -6,11 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"pismo-take-home/internal/event"
-	"pismo-take-home/internal/repository"
 )
 
-func New(repository *repository.Repository) *EventProcessor {
-	return &EventProcessor{ repository: repository }
+func New(dataStore DataStore) *EventProcessor {
+	return &EventProcessor{ dataStore: dataStore }
 }
 
 func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventBytes []byte) error {
@@ -21,7 +20,7 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 		return fmt.Errorf("Error while unmarshalling event: %w", unmarshalError)
 	}
 
-	saveError := eventProcessor.repository.Save(ctx, event)
+	saveError := eventProcessor.dataStore.Save(ctx, event)
 
 	if saveError != nil {
 		return fmt.Errorf("Error while saving event: %w", saveError)
@@ -30,6 +29,10 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 	return nil
 }
 
+type DataStore interface {
+	Save(ctx context.Context, event event.Event) error
+}
+
 type EventProcessor struct {
-	repository *repository.Repository
+	dataStore DataStore
 }
