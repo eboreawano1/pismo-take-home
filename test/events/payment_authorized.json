@@ -1,0 +1,12 @@
+{
+    "event_id":"event-1",
+    "event_type":"PAYMENT_AUTHORIZED",
+    "event_time":"2026-04-27T00:00:00Z",
+    "tenant_id":"tenant-1",
+    "producer":"payments-api",
+    "schema_version":"1",
+    "payload": {
+        "amount":1000,
+        "currency":"USD"
+    }
+}
