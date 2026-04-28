@@ -32,15 +32,27 @@ docker compose exec -T kafka kafka-console-producer \
 {
     "event_id":"event-1",
     "tenant_id":"tenant-1",
-    "event_type":"payment_authorized",
+    "event_type":"PAYMENT_AUTHORIZED",
     "producer":"payments-api",
-    "event_time":"2026-04-27T20:00:00Z",
+    "event_time":"2026-04-27T00:00:00Z",
     "schema_version":"1",
-    "payload":{"amount":1000,"currency":"USD"}
+    "payload": {
+        "amount":1000,
+        "currency":"USD"
+    }
 }
 
 docker compose exec postgres psql -U username -d pismo-database
 
-SELECT event_id, tenant_id, event_type, status, create_time
+SELECT 
+    event_id, 
+    tenant_id, 
+    event_type, 
+    producer, 
+    event_time, 
+    schema_version, 
+    payload, 
+    status, 
+    create_time
 FROM processed_events;
 ```
