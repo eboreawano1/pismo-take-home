@@ -25,22 +25,9 @@ docker compose exec kafka kafka-topics \
  --partitions 1 \
  --replication-factor 1
 
-docker compose exec -T kafka kafka-console-producer \
- --bootstrap-server kafka:9092 \
- --topic events
-
-{
-    "event_id":"event-1",
-    "tenant_id":"tenant-1",
-    "event_type":"PAYMENT_AUTHORIZED",
-    "producer":"payments-api",
-    "event_time":"2026-04-27T00:00:00Z",
-    "schema_version":"1",
-    "payload": {
-        "amount":1000,
-        "currency":"USD"
-    }
-}
+jq -c . test/events/payment_authorized.json | docker compose exec -T kafka kafka-console-producer \
+  --bootstrap-server kafka:9092 \
+  --topic events
 
 docker compose exec postgres psql -U username -d pismo-database
 
