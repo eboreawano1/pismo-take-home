@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"pismo-take-home/internal/event"
+	"pismo-take-home/internal/validator"
 )
 
 func New(dataStore DataStore) *EventProcessor {
@@ -18,6 +19,12 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 
 	if unmarshalError != nil {
 		return fmt.Errorf("Error while unmarshalling event: %w", unmarshalError)
+	}
+
+	validationErrors := validator.Validate(event)
+	
+	if len(validationErrors) > 0 {
+		return fmt.Errorf("Error: invalid event: %v", validationErrors)
 	}
 
 	saveError := eventProcessor.dataStore.Save(ctx, event)
