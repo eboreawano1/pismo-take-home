@@ -47,6 +47,7 @@ func (repository *Repository) Save(
 			validation_errors
 		)
 		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10::jsonb)
+		ON CONFLICT (event_id) DO NOTHING
 	`,
 		e.EventId,
 		e.EventType,
