@@ -8,6 +8,8 @@ import (
 	"pismo-take-home/internal/consumer"
 	"pismo-take-home/internal/eventprocessor"
 	"pismo-take-home/internal/repository"
+	"pismo-take-home/internal/validator"
+	"pismo-take-home/schemas"
 )
 
 func main() {
@@ -26,7 +28,14 @@ func main() {
 
 	defer repo.Close()
 	log.Println("database connected")
-	processor := eventprocessor.New(repo)
+	schemaLoader, error := schemas.NewSchemaLoader("schemas")
+
+	if error != nil {
+		log.Fatal(error)
+	}
+
+	payloadValidator := validator.NewPayloadValidator(schemaLoader)
+	processor := eventprocessor.New(payloadValidator, repo)
 	brokers := strings.Split(config.KafkaBrokers, ",")
 	kafkaConsumer := consumer.NewKafkaConsumer(config.KafkaTopic, config.KafkaGroupID, brokers)
 	ctx := context.Background()

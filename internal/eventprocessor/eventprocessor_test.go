@@ -46,7 +46,7 @@ func TestProcessEvent_ValidEvent_PersistsEvent(test *testing.T) {
 		"producer": "manual",
 		"event_time": "2026-04-28T00:00:00Z",
 		"schema_version": "1",
-		"payload": {}
+		"payload": {"amount": 1, "currency": "USD"}
 	}`)
 
 	error := processor.ProcessEvent(context.Background(), eventBytes)

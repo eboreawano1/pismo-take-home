@@ -18,10 +18,25 @@ func NewSchemaLoader(prefixPath string) (*SchemaLoader, error) {
 		}
 
 		if filepath.Ext(path) == ".json" {
-			addResourceError := compiler.AddResource(path, nil)
+			file, openError := os.Open(path)
+
+			if openError != nil {
+				return fmt.Errorf("Error opening schema %s: %w", path, openError)
+			}
+
+			relativePath, relativePathError := filepath.Rel(prefixPath, path)
+
+			if relativePathError != nil {
+				file.Close()
+				return fmt.Errorf("Error resolving schema path %s: %w", path, relativePathError)
+			}
+
+			schemaPath := filepath.ToSlash(filepath.Join(filepath.Base(prefixPath), relativePath))
+			addResourceError := compiler.AddResource(schemaPath, file)
+			file.Close()
 
 			if addResourceError != nil {
-				return fmt.Errorf("Error adding schema %s: %w", path, error)
+				return fmt.Errorf("Error adding schema %s: %w", path, addResourceError)
 			}
 		}
 
