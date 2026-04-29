@@ -53,7 +53,7 @@ func (repository *Repository) Save(
 		e.Payload,
 		e.EventTime,
 		e.SchemaVersion,
-		convertToJSON(validationErrors),
+		convertValidationErrorsToJSON(validationErrors),
 	)
 
 	if error != nil {
@@ -67,8 +67,17 @@ func (repository *Repository) Close() error {
 	return repository.database.Close()
 }
 
-func convertToJSON(object any) []byte {
-	json, _ := json.Marshal(object)
+func convertValidationErrorsToJSON(validationErrors []string) []byte {
+	if len(validationErrors) == 0 {
+		return nil
+	}
+
+	json, error := json.Marshal(validationErrors)
+
+	if error != nil {
+		return []byte(`["error while marshalling validation errors"]`)
+	}
+
 	return json
 }
 

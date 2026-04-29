@@ -60,6 +60,10 @@ func TestProcessEvent_ValidEvent_PersistsEvent(test *testing.T) {
 	if len(dataStore.persistedEvents) != 1 {
 		test.Fatalf("expected 1 saved event, received: %d", len(dataStore.persistedEvents))
 	}
+
+	if dataStore.validationErrors[0] != nil {
+		test.Fatalf("expected no validation errors but found: %v", dataStore.validationErrors[0])
+	}
 }
 
 
@@ -112,6 +116,10 @@ func TestProcessEvent_InvalidEvent_InvalidEventPersisted(test *testing.T) {
 
 	if dataStore.statuses[0] != event.InvalidEventStatus {
 		test.Fatalf("expected INVALID status, found %s", dataStore.statuses[0])
+	}
+
+	if dataStore.validationErrors[0] == nil {
+		test.Fatal("missing expected validation errors")
 	}
 }
 

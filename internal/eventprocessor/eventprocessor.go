@@ -31,7 +31,7 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 		saveError := eventProcessor.dataStore.Save(ctx, e, event.InvalidEventStatus, validationErrors)
 		
 		if saveError != nil {
-			return fmt.Errorf("Error while saving event: %w", saveError)
+			return fmt.Errorf("Error while saving invalid event: %w", saveError)
 		}
 
 		return nil
