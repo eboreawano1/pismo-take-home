@@ -6,9 +6,24 @@ import (
 	"context"
 	"errors"
 	"pismo-take-home/internal/event"
+	"pismo-take-home/schemas"
+	"pismo-take-home/internal/validator"
 )
 
 
+
+func newTestProcessor(test *testing.T, dataStore DataStore) *EventProcessor {
+	test.Helper()
+	schemaLoader, error := schemas.NewSchemaLoader("../../schemas")
+
+	if error != nil {
+		test.Fatalf("Error creating schema loader: %v", error)
+	}
+
+	payloadValidator := validator.NewPayloadValidator(schemaLoader)
+
+	return New(payloadValidator, dataStore)
+}
 
 func (dataStore *MockDataStore) Save(ctx context.Context, event event.Event) error {
 	if dataStore.error != nil {
@@ -22,12 +37,12 @@ func (dataStore *MockDataStore) Save(ctx context.Context, event event.Event) err
 
 func TestProcessEvent_ValidEvent_PersistsEvent(test *testing.T) {
 	dataStore := &MockDataStore{}
-	processor := New(dataStore)
+	processor := newTestProcessor(test, dataStore)
 
 	eventBytes := []byte(`{
 		"event_id": "1",
 		"tenant_id": "tenant-1",
-		"event_type": "TEST",
+		"event_type": "payment_authorized",
 		"producer": "manual",
 		"event_time": "2026-04-28T00:00:00Z",
 		"schema_version": "1",
@@ -50,7 +65,7 @@ func TestProcessEvent_PersistenceError_ReturnsError(test *testing.T) {
 	dataStore := &MockDataStore{
 		error: errors.New("database failure"),
 	}
-	processor := New(dataStore)
+	processor := newTestProcessor(test, dataStore)
 
 	eventBytes := []byte(`{
 		"event_id": "1",
@@ -71,7 +86,7 @@ func TestProcessEvent_PersistenceError_ReturnsError(test *testing.T) {
 
 func TestProcessEvent_InvalidEvent_ReturnsError(test *testing.T) {
 	dataStore := &MockDataStore{}
-	processor := New(dataStore)
+	processor := newTestProcessor(test, dataStore)
 
 	eventBytes := []byte(`invalid-json`)
 

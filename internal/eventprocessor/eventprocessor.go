@@ -9,8 +9,11 @@ import (
 	"pismo-take-home/internal/validator"
 )
 
-func New(dataStore DataStore) *EventProcessor {
-	return &EventProcessor{ dataStore: dataStore }
+func New(payloadValidator *validator.PayloadValidator, dataStore DataStore) *EventProcessor {
+	return &EventProcessor{ 
+		dataStore: dataStore,
+		payloadValidator: payloadValidator,
+	}
 }
 
 func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventBytes []byte) error {
@@ -21,7 +24,8 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 		return fmt.Errorf("Error while unmarshalling event: %w", unmarshalError)
 	}
 
-	validationErrors := validator.Validate(event)
+	validationErrors := validator.ValidateEvent(event)
+	validationErrors = append(validationErrors, eventProcessor.payloadValidator.ValidatePayload(event)...)
 	
 	if len(validationErrors) > 0 {
 		return fmt.Errorf("Error: invalid event: %v", validationErrors)
@@ -42,4 +46,5 @@ type DataStore interface {
 
 type EventProcessor struct {
 	dataStore DataStore
+	payloadValidator *validator.PayloadValidator
 }

@@ -1,12 +1,11 @@
 package validator
 
 import (
-	"fmt"
 	"strings"
 	"pismo-take-home/internal/event"
 )
 
-func Validate(event event.Event)  []string {
+func ValidateEvent(event event.Event)  []string {
 	var errors []string
 
 	if strings.TrimSpace(event.EventId) == "" {
