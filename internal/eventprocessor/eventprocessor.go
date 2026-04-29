@@ -28,11 +28,16 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 	validationErrors = append(validationErrors, eventProcessor.payloadValidator.ValidatePayload(e)...)
 	
 	if len(validationErrors) > 0 {
-		_ = eventProcessor.dataStore.Save(ctx, e, event.InvalidEventStatus, validationErrors)
+		saveError := eventProcessor.dataStore.Save(ctx, e, event.InvalidEventStatus, validationErrors)
+		
+		if saveError != nil {
+			return fmt.Errorf("Error while saving event: %w", saveError)
+		}
+
 		return nil
 	}
 
-	saveError := eventProcessor.dataStore.Save(ctx, e, event.InvalidEventStatus, validationErrors)
+	saveError := eventProcessor.dataStore.Save(ctx, e, event.ReadyToDeliverStatus, validationErrors)
 
 	if saveError != nil {
 		return fmt.Errorf("Error while saving event: %w", saveError)
