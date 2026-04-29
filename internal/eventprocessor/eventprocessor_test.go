@@ -75,6 +75,10 @@ func TestProcessEvent_ValidEvent_PersistsEvent(test *testing.T) {
 	if dataStore.deliveryTargets[0] != "analytics" {
 		test.Fatalf("expected analytics but found: %s", dataStore.deliveryTargets[0])
 	}
+
+	if dataStore.statuses[0] != event.ReadyToDeliverStatus {
+		test.Fatalf("expected READY_TO_DELIVER status but found: %s", dataStore.statuses[0])
+	}
 }
 
 
@@ -131,6 +135,39 @@ func TestProcessEvent_InvalidEvent_InvalidEventPersisted(test *testing.T) {
 
 	if dataStore.validationErrors[0] == nil {
 		test.Fatal("missing expected validation errors")
+	}
+}
+
+func TestProcess_UnroutableEvent_PersistedWithProcessingError(test *testing.T) {
+	dataStore := &MockDataStore{}
+	processor := newTestProcessor(test, dataStore)
+
+	eventBytes := []byte(`{
+		"event_id": "event-1",
+		"tenant_id": "tenant-1",
+		"event_type": "unrouted_event",
+		"producer": "new-api",
+		"event_time": "2026-04-28T20:00:00Z",
+		"schema_version": "1",
+		"payload": {}
+	}`)
+
+	error := processor.ProcessEvent(context.Background(), eventBytes)
+
+	if error != nil {
+		test.Fatalf("received unexpected error:  %v", error)
+	}
+
+	if dataStore.statuses[0] != event.ProcessingErrorStatus {
+		test.Fatalf("expected PROCESSING_ERROR status but found: %s", dataStore.statuses[0])
+	}
+
+	if dataStore.deliveryTargets[0] != "" {
+		test.Fatalf("expected missing delivery target but found:  %s", dataStore.deliveryTargets[0])
+	}
+
+	if len(dataStore.persistedEvents) != 1 {
+		test.Fatalf("expected 1 saved event but found: %d", len(dataStore.persistedEvents))
 	}
 }
 
