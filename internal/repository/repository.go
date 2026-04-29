@@ -30,6 +30,7 @@ func (repository *Repository) Save(
 		ctx context.Context, 
 		e event.Event,
 		status string,
+		delivery_target string,
 		validationErrors []string,
 	) error {
 	_, error := repository.database.ExecContext(ctx, `
@@ -41,9 +42,11 @@ func (repository *Repository) Save(
 			producer,
 			payload,
 			event_time,
-			schema_version
+			schema_version,
+			delivery_target,
+			validation_errors
 		)
-		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9::jsonb)
+		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10::jsonb)
 	`,
 		e.EventId,
 		e.EventType,
@@ -53,6 +56,7 @@ func (repository *Repository) Save(
 		e.Payload,
 		e.EventTime,
 		e.SchemaVersion,
+		delivery_target,
 		convertValidationErrorsToJSON(validationErrors),
 	)
 

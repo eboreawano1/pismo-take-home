@@ -25,7 +25,13 @@ func newTestProcessor(test *testing.T, dataStore DataStore) *EventProcessor {
 	return New(payloadValidator, dataStore)
 }
 
-func (dataStore *MockDataStore) Save(ctx context.Context, event event.Event, status string, validationErrors []string) error {
+func (dataStore *MockDataStore) Save(
+		ctx context.Context, 
+		event event.Event, 
+		status string, 
+		deliveryTarget string,
+		validationErrors []string,
+	) error {
 	if dataStore.error != nil {
 		return dataStore.error
 	}
@@ -33,6 +39,7 @@ func (dataStore *MockDataStore) Save(ctx context.Context, event event.Event, sta
 	dataStore.persistedEvents = append(dataStore.persistedEvents, event)
 	dataStore.statuses = append(dataStore.statuses, status)
 	dataStore.validationErrors = append(dataStore.validationErrors, validationErrors)
+	dataStore.deliveryTargets = append(dataStore.deliveryTargets, deliveryTarget)
 
 	return nil
 }
@@ -64,6 +71,10 @@ func TestProcessEvent_ValidEvent_PersistsEvent(test *testing.T) {
 	if dataStore.validationErrors[0] != nil {
 		test.Fatalf("expected no validation errors but found: %v", dataStore.validationErrors[0])
 	}
+
+	if dataStore.deliveryTargets[0] != "analytics" {
+		test.Fatalf("expected analytics but found: %s", dataStore.deliveryTargets[0])
+	}
 }
 
 
@@ -76,7 +87,7 @@ func TestProcessEvent_PersistenceError_ReturnsError(test *testing.T) {
 	eventBytes := []byte(`{
 		"event_id": "1",
 		"tenant_id": "tenant-1",
-		"event_type": "TEST",
+		"event_type": "payment_authorized",
 		"producer": "manual",
 		"event_time": "2026-04-28T00:00:00Z",
 		"schema_version": "1",
@@ -87,6 +98,10 @@ func TestProcessEvent_PersistenceError_ReturnsError(test *testing.T) {
 	
 	if error == nil {
 		test.Fatal("did not receive expected error")
+	}
+
+	if dataStore.statuses[0] != event.ProcessingErrorStatus {
+		test.Fatalf("expected PROCESSING_ERROR but found %s", dataStore.statuses[0])
 	}
 }
 
@@ -128,4 +143,5 @@ type MockDataStore struct {
 	error         error
 	statuses    []string
 	validationErrors     [][]string
+	deliveryTargets []string
 }

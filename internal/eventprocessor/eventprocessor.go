@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"pismo-take-home/internal/event"
 	"pismo-take-home/internal/validator"
+	"pismo-take-home/internal/router"
 )
 
 func New(payloadValidator *validator.PayloadValidator, dataStore DataStore) *EventProcessor {
@@ -28,7 +29,7 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 	validationErrors = append(validationErrors, eventProcessor.payloadValidator.ValidatePayload(e)...)
 	
 	if len(validationErrors) > 0 {
-		saveError := eventProcessor.dataStore.Save(ctx, e, event.InvalidEventStatus, validationErrors)
+		saveError := eventProcessor.dataStore.Save(ctx, e, event.InvalidEventStatus, "", validationErrors)
 		
 		if saveError != nil {
 			return fmt.Errorf("Error while saving invalid event: %w", saveError)
@@ -37,7 +38,19 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 		return nil
 	}
 
-	saveError := eventProcessor.dataStore.Save(ctx, e, event.ReadyToDeliverStatus, validationErrors)
+	deliveryTarget := router.RouteEvent(e)
+
+	if deliveryTarget == "" {
+		processingError := eventProcessor.dataStore.Save(ctx, e, event.ProcessingErrorStatus, "", nil)
+		
+		if  processingError != nil {
+			return fmt.Errorf("Error while processing unrouted event: %w", processingError)
+		}
+
+		return nil
+	}
+
+	saveError := eventProcessor.dataStore.Save(ctx, e, event.ReadyToDeliverStatus, deliveryTarget, validationErrors)
 
 	if saveError != nil {
 		return fmt.Errorf("Error while saving event: %w", saveError)
@@ -51,6 +64,7 @@ type DataStore interface {
 		ctx context.Context, 
 		event event.Event,
 		status string,
+		deliveryTarget string,
 		validationErrors []string,
 	) error
 }
