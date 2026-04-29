@@ -17,21 +17,22 @@ func New(payloadValidator *validator.PayloadValidator, dataStore DataStore) *Eve
 }
 
 func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventBytes []byte) error {
-	var event event.Event
-	unmarshalError := json.Unmarshal(eventBytes, &event)
+	var e event.Event
+	unmarshalError := json.Unmarshal(eventBytes, &e)
 
 	if unmarshalError != nil {
 		return fmt.Errorf("Error while unmarshalling event: %w", unmarshalError)
 	}
 
-	validationErrors := validator.ValidateEvent(event)
-	validationErrors = append(validationErrors, eventProcessor.payloadValidator.ValidatePayload(event)...)
+	validationErrors := validator.ValidateEvent(e)
+	validationErrors = append(validationErrors, eventProcessor.payloadValidator.ValidatePayload(e)...)
 	
 	if len(validationErrors) > 0 {
-		return fmt.Errorf("Error: invalid event: %v", validationErrors)
+		_ = eventProcessor.dataStore.Save(ctx, e, event.InvalidEventStatus, validationErrors)
+		return nil
 	}
 
-	saveError := eventProcessor.dataStore.Save(ctx, event)
+	saveError := eventProcessor.dataStore.Save(ctx, e, event.InvalidEventStatus, validationErrors)
 
 	if saveError != nil {
 		return fmt.Errorf("Error while saving event: %w", saveError)
@@ -41,7 +42,12 @@ func (eventProcessor *EventProcessor) ProcessEvent(ctx context.Context, eventByt
 }
 
 type DataStore interface {
-	Save(ctx context.Context, event event.Event) error
+	Save(
+		ctx context.Context, 
+		event event.Event,
+		status string,
+		validationErrors []string,
+	) error
 }
 
 type EventProcessor struct {

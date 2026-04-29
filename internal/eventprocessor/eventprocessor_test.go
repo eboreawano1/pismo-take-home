@@ -25,12 +25,14 @@ func newTestProcessor(test *testing.T, dataStore DataStore) *EventProcessor {
 	return New(payloadValidator, dataStore)
 }
 
-func (dataStore *MockDataStore) Save(ctx context.Context, event event.Event) error {
+func (dataStore *MockDataStore) Save(ctx context.Context, event event.Event, status string, validationErrors []string) error {
 	if dataStore.error != nil {
 		return dataStore.error
 	}
 
 	dataStore.persistedEvents = append(dataStore.persistedEvents, event)
+	dataStore.statuses = append(dataStore.statuses, status)
+	dataStore.validationErrors = append(dataStore.validationErrors, validationErrors)
 
 	return nil
 }
@@ -84,25 +86,38 @@ func TestProcessEvent_PersistenceError_ReturnsError(test *testing.T) {
 	}
 }
 
-func TestProcessEvent_InvalidEvent_ReturnsError(test *testing.T) {
+func TestProcessEvent_InvalidEvent_InvalidEventPersisted(test *testing.T) {
 	dataStore := &MockDataStore{}
 	processor := newTestProcessor(test, dataStore)
 
-	eventBytes := []byte(`invalid-json`)
+	eventBytes := []byte(`{
+		"event_id": "",
+		"tenant_id": "tenant-1",
+		"event_type": "payment_authorized",
+		"producer": "payments-api",
+		"event_time": "2026-04-28T20:00:00Z",
+		"schema_version": "1",
+		"payload": {}
+	}`)
 
 	error := processor.ProcessEvent(context.Background(), eventBytes)
-	
-	if error == nil {
-		test.Fatal("did not receive expected error")
+
+	if error != nil {
+		test.Fatalf("unexpected error: %v", error)
 	}
 
-	if len(dataStore.persistedEvents) != 0 {
-		test.Fatalf("expected 0 saved events, received %d", len(dataStore.persistedEvents))
+	if len(dataStore.persistedEvents) != 1 {
+		test.Fatalf("expected 1 saved event, found: %d", len(dataStore.persistedEvents))
+	}
+
+	if dataStore.statuses[0] != event.InvalidEventStatus {
+		test.Fatalf("expected INVALID status, found %s", dataStore.statuses[0])
 	}
 }
-
 
 type MockDataStore struct {
 	persistedEvents []event.Event
 	error         error
+	statuses    []string
+	validationErrors     [][]string
 }
