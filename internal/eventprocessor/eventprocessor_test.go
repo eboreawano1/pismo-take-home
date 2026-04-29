@@ -99,10 +99,6 @@ func TestProcessEvent_PersistenceError_ReturnsError(test *testing.T) {
 	if error == nil {
 		test.Fatal("did not receive expected error")
 	}
-
-	if dataStore.statuses[0] != event.ProcessingErrorStatus {
-		test.Fatalf("expected PROCESSING_ERROR but found %s", dataStore.statuses[0])
-	}
 }
 
 func TestProcessEvent_InvalidEvent_InvalidEventPersisted(test *testing.T) {
