@@ -11,5 +11,6 @@ RUN CGO_ENABLED=0 go build -o eventprocessor ./cmd/eventprocessor
 FROM alpine:3.19
 WORKDIR /app
 COPY --from=builder /app/eventprocessor .
+COPY --from=builder /app/schemas ./schemas
 
 CMD ["./eventprocessor"]
