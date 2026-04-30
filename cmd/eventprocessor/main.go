@@ -38,6 +38,7 @@ func main() {
 	processor := eventprocessor.New(payloadValidator, repo)
 	brokers := strings.Split(config.KafkaBrokers, ",")
 	kafkaConsumer := consumer.NewKafkaConsumer(config.KafkaTopic, config.KafkaGroupID, brokers)
+	defer kafkaConsumer.Close()
 	ctx := context.Background()
 	log.Println("starting event-processor")
 

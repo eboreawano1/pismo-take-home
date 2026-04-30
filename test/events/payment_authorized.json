@@ -1,6 +1,6 @@
 {
     "event_id":"event-1",
-    "event_type":"PAYMENT_AUTHORIZED",
+    "event_type":"payment_authorized",
     "event_time":"2026-04-27T00:00:00Z",
     "tenant_id":"tenant-1",
     "producer":"payments-api",
